@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: industrial-ai-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./industrial_ai.db
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=industrial-ai-secret-key-change-in-production-2024
+      - CORS_ORIGINS=http://localhost,http://localhost:80,http://localhost:5173
+      - DEBUG=true
+    volumes:
+      - ./storage:/app/storage
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    container_name: industrial-ai-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    container_name: industrial-ai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
